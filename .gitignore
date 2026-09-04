@@ -1,0 +1,40 @@
+ #Environments
+.env
+.envrc
+.env.backup
+.env.*
+!.env.example
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate.d/
+*.tfvars
+!terraform.tfvars
+!prod.tfvars
+
+# Lambda packages
+lambda-deployment.zip
+lambda-package/
+*.zip
+
+
+# Node
+node_modules/
+out/
+.next/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+uv.lock
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store

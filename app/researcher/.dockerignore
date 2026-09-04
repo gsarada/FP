@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+test_research.py
+test_local.py
+build_local.sh
+deploy.py
+*.md
+.git/
+.gitignore
