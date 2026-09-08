@@ -113,7 +113,7 @@ def wait_for_lambda_active(region: str, function_name: str):
 
 
 def main():
-    print("Alex Researcher Service - Lambda Deployment")
+    print("FP Researcher Service - Lambda Deployment")
     print("==========================================")
 
     # Get AWS account ID
@@ -173,7 +173,7 @@ def main():
 
     # Generate a unique tag using timestamp
     image_tag = f"deploy-{int(time.time())}"
-    local_image = f"alex-researcher:{image_tag}"
+    local_image = f"fp-researcher:{image_tag}"
     remote_image = f"{ecr_url}:{image_tag}"
 
     # Build Docker image

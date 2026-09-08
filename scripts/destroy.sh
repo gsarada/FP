@@ -45,16 +45,18 @@ terraform -chdir=temp workspace select "$ENVIRONMENT"
 echo "📦 Emptying S3 buckets..."
 
 # Get bucket names from state outputs if any
-buckets=$(terraform -chdir=temp output -json | jq -r 'to_entries[] | select(.key | contains("bucket")) | .value.value')
+mapfile -t buckets < <(terraform -chdir=temp output -json | jq -r 'to_entries[] | select(.key | endswith("-bucket")) | .value.value')
 echo "Buckets - ${buckets}"
 
 # Empty buckets if any exists
-if $buckets and aws s3 ls "s3://$buckets[0]" 2>/dev/null; then
-    echo "  Emptying $buckets[0]..."
-    aws s3 rm "s3://$buckets[0]" --recursive
-else
-    echo "  Bucket not found or already empty"
-fi
+for bucket in "${buckets[@]}"; do
+    if aws s3 ls "s3://${bucket}" >/dev/null 2>&1; then
+        echo "  Emptying ${bucket}..."
+        aws s3 rm "s3://${bucket}" --recursive
+    else
+        echo "  Bucket ${bucket} not found or inaccessible"
+    fi
+done
 
 echo "🔥 Running terraform destroy..."
 

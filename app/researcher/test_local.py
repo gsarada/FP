@@ -24,7 +24,7 @@ async def test_local():
     try:
         async with create_playwright_mcp_server() as playwright_mcp:
             agent = Agent(
-                name="Alex Investment Researcher",
+                name="FP Investment Researcher",
                 instructions=get_agent_instructions(),
                 model="gpt-4.1-mini",
                 tools=[ingest_financial_document],

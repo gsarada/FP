@@ -17,7 +17,7 @@ load_dotenv(env_path, override=True)
 
 # Get configuration
 VECTOR_BUCKET = os.getenv('VECTOR_BUCKET')
-SAGEMAKER_ENDPOINT = os.getenv('SAGEMAKER_ENDPOINT', 'alex-embedding-endpoint')
+SAGEMAKER_ENDPOINT = os.getenv('SAGEMAKER_ENDPOINT', 'fp-dev-embedding-endpoint')
 INDEX_NAME = 'financial-research'
 
 if not VECTOR_BUCKET:

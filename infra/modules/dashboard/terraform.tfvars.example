@@ -3,12 +3,12 @@
 
 # Your AWS region for deployment
 # Should match your main deployment region
-aws_region = "us-east-1"
+aws_region = "ap-southeast-1"
 
 # Bedrock region where your models are deployed
 # IMPORTANT: This must match the BEDROCK_REGION in your Lambda functions
-# Check with: aws lambda get-function-configuration --function-name alex-planner --query "Environment.Variables.BEDROCK_REGION"
-bedrock_region = "us-east-1"
+# Check with: aws lambda get-function-configuration --function-name fp-dev-planner --query "Environment.Variables.BEDROCK_REGION"
+bedrock_region = "ap-southeast-1"
 
 # Bedrock model ID to monitor in dashboards
 # Common values:

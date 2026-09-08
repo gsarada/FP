@@ -32,7 +32,7 @@ def test_tagger_lambda():
     # Invoke Lambda
     try:
         response = lambda_client.invoke(
-            FunctionName='alex-tagger',
+            FunctionName='fp-dev-tagger',
             InvocationType='RequestResponse',
             Payload=json.dumps({'instruments': test_instruments})
         )

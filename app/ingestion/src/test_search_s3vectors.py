@@ -120,7 +120,7 @@ def search_vectors(query_text, k=5):
 def main():
     """Explore the S3 Vectors database."""
     print("=" * 60)
-    print("Alex S3 Vectors Database Explorer")
+    print("FP S3 Vectors Database Explorer")
     print("=" * 60)
     print(f"Bucket: {VECTOR_BUCKET}")
     print(f"Index: {INDEX_NAME}")

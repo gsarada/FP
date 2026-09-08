@@ -61,6 +61,9 @@ resource "aws_sagemaker_endpoint_configuration" "serverless_config" {
       max_concurrency   = 2  # Reduced from 10 to avoid quota limit
     }
   }
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Add a delay for IAM role propagation before creating endpoint
@@ -76,9 +79,15 @@ resource "time_sleep" "wait_for_iam_propagation" {
 resource "aws_sagemaker_endpoint" "embedding_endpoint" {
   name                 = "${local.name_prefix}-embedding-endpoint"
   endpoint_config_name = aws_sagemaker_endpoint_configuration.serverless_config.name
-  
+  tags = local.common_tags
+
   depends_on = [
     time_sleep.wait_for_iam_propagation
   ]
   
+}
+
+resource "aws_cloudwatch_log_group" "sagemaker_endpoint_logs" {
+  name              = "/aws/sagemaker/Endpoints/${aws_sagemaker_endpoint.embedding_endpoint.name}"
+  retention_in_days = 7
 }

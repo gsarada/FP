@@ -122,7 +122,7 @@ def test_research(topic=None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Test the Alex Researcher service",
+        description="Test the FP Researcher service",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

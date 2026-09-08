@@ -6,5 +6,5 @@
 aws_region = "us-east-1"
 
 # SageMaker endpoint name from Part 2
-# This should be "alex-embedding-endpoint" if you didn't change it
-sagemaker_endpoint_name = "alex-embedding-endpoint"
+# This should be "fp-<env>-embedding-endpoint" if you didn't change it
+sagemaker_endpoint_name = "fp-dev-embedding-endpoint"

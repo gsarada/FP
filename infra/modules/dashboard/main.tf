@@ -1,30 +1,12 @@
 # Part 8: Enterprise - CloudWatch Dashboards for Monitoring
-
-terraform {
-  required_version = ">= 1.0"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-}
-
-# Data sources
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
-
 locals {
-  name_prefix = "alex"
+  name_prefix = "fp-${var.environment}"
 
   common_tags = {
-    Project   = "alex"
-    Part      = "8_enterprise"
-    ManagedBy = "terraform"
+    Project     = "fp"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Module      = "agents"
   }
 }
 
@@ -117,9 +99,9 @@ resource "aws_cloudwatch_dashboard" "ai_model_usage" {
         height = 6
         properties = {
           metrics = [
-            [{ expression = "SEARCH(' {AWS/SageMaker,EndpointName,VariantName} MetricName=\"Invocations\" EndpointName=\"alex-embedding-endpoint\" ', 'Sum')", id = "s1", label = "Invocations", color = "#1f77b4" }],
-            [{ expression = "SEARCH(' {AWS/SageMaker,EndpointName,VariantName} MetricName=\"Invocation4XXErrors\" EndpointName=\"alex-embedding-endpoint\" ', 'Sum')", id = "s2", label = "4XX Errors", color = "#ff7f0e" }],
-            [{ expression = "SEARCH(' {AWS/SageMaker,EndpointName,VariantName} MetricName=\"Invocation5XXErrors\" EndpointName=\"alex-embedding-endpoint\" ', 'Sum')", id = "s3", label = "5XX Errors", color = "#d62728" }]
+            [{ expression = "SEARCH(' {AWS/SageMaker,EndpointName,VariantName} MetricName=\"Invocations\" EndpointName=\"fp-${var.environment}-embedding-endpoint\" ', 'Sum')", id = "s1", label = "Invocations", color = "#1f77b4" }],
+            [{ expression = "SEARCH(' {AWS/SageMaker,EndpointName,VariantName} MetricName=\"Invocation4XXErrors\" EndpointName=\"fp-${var.environment}-embedding-endpoint\" ', 'Sum')", id = "s2", label = "4XX Errors", color = "#ff7f0e" }],
+            [{ expression = "SEARCH(' {AWS/SageMaker,EndpointName,VariantName} MetricName=\"Invocation5XXErrors\" EndpointName=\"fp-${var.environment}-embedding-endpoint\" ', 'Sum')", id = "s3", label = "5XX Errors", color = "#d62728" }]
           ]
           view    = "timeSeries"
           stacked = false
@@ -141,9 +123,9 @@ resource "aws_cloudwatch_dashboard" "ai_model_usage" {
         height = 6
         properties = {
           metrics = [
-            [{ expression = "SEARCH(' {AWS/SageMaker,EndpointName,VariantName} MetricName=\"ModelLatency\" EndpointName=\"alex-embedding-endpoint\" ', 'Average')", id = "ml1", label = "Average Latency", color = "#2ca02c" }],
-            [{ expression = "SEARCH(' {AWS/SageMaker,EndpointName,VariantName} MetricName=\"ModelLatency\" EndpointName=\"alex-embedding-endpoint\" ', 'Maximum')", id = "ml2", label = "Max Latency", color = "#d62728" }],
-            [{ expression = "SEARCH(' {AWS/SageMaker,EndpointName,VariantName} MetricName=\"ModelLatency\" EndpointName=\"alex-embedding-endpoint\" ', 'Minimum')", id = "ml3", label = "Min Latency", color = "#1f77b4" }]
+            [{ expression = "SEARCH(' {AWS/SageMaker,EndpointName,VariantName} MetricName=\"ModelLatency\" EndpointName=\"fp-${var.environment}-embedding-endpoint\" ', 'Average')", id = "ml1", label = "Average Latency", color = "#2ca02c" }],
+            [{ expression = "SEARCH(' {AWS/SageMaker,EndpointName,VariantName} MetricName=\"ModelLatency\" EndpointName=\"fp-${var.environment}-embedding-endpoint\" ', 'Maximum')", id = "ml2", label = "Max Latency", color = "#d62728" }],
+            [{ expression = "SEARCH(' {AWS/SageMaker,EndpointName,VariantName} MetricName=\"ModelLatency\" EndpointName=\"fp-${var.environment}-embedding-endpoint\" ', 'Minimum')", id = "ml3", label = "Min Latency", color = "#1f77b4" }]
           ]
           view    = "timeSeries"
           stacked = false
@@ -179,11 +161,11 @@ resource "aws_cloudwatch_dashboard" "agent_performance" {
         height = 6
         properties = {
           metrics = [
-            ["AWS/Lambda", "Duration", "FunctionName", "alex-planner", { stat = "Average", label = "Planner", id = "m1", color = "#1f77b4" }],
-            [".", ".", ".", "alex-reporter", { stat = "Average", label = "Reporter", id = "m2", color = "#2ca02c" }],
-            [".", ".", ".", "alex-charter", { stat = "Average", label = "Charter", id = "m3", color = "#ff7f0e" }],
-            [".", ".", ".", "alex-retirement", { stat = "Average", label = "Retirement", id = "m4", color = "#d62728" }],
-            [".", ".", ".", "alex-tagger", { stat = "Average", label = "Tagger", id = "m5", color = "#9467bd" }]
+            ["AWS/Lambda", "Duration", "FunctionName", "fp-${var.environment}-planner", { stat = "Average", label = "Planner", id = "m1", color = "#1f77b4" }],
+            [".", ".", ".", "fp-${var.environment}-reporter", { stat = "Average", label = "Reporter", id = "m2", color = "#2ca02c" }],
+            [".", ".", ".", "fp-${var.environment}-charter", { stat = "Average", label = "Charter", id = "m3", color = "#ff7f0e" }],
+            [".", ".", ".", "fp-${var.environment}-retirement", { stat = "Average", label = "Retirement", id = "m4", color = "#d62728" }],
+            [".", ".", ".", "fp-${var.environment}-tagger", { stat = "Average", label = "Tagger", id = "m5", color = "#9467bd" }]
           ]
           view    = "timeSeries"
           stacked = false
@@ -206,11 +188,11 @@ resource "aws_cloudwatch_dashboard" "agent_performance" {
         height = 6
         properties = {
           metrics = [
-            ["AWS/Lambda", "Errors", "FunctionName", "alex-planner", { stat = "Sum", label = "Planner Errors", id = "e1", color = "#1f77b4" }],
-            [".", ".", ".", "alex-reporter", { stat = "Sum", label = "Reporter Errors", id = "e2", color = "#2ca02c" }],
-            [".", ".", ".", "alex-charter", { stat = "Sum", label = "Charter Errors", id = "e3", color = "#ff7f0e" }],
-            [".", ".", ".", "alex-retirement", { stat = "Sum", label = "Retirement Errors", id = "e4", color = "#d62728" }],
-            [".", ".", ".", "alex-tagger", { stat = "Sum", label = "Tagger Errors", id = "e5", color = "#9467bd" }]
+            ["AWS/Lambda", "Errors", "FunctionName", "fp-${var.environment}-planner", { stat = "Sum", label = "Planner Errors", id = "e1", color = "#1f77b4" }],
+            [".", ".", ".", "fp-${var.environment}-reporter", { stat = "Sum", label = "Reporter Errors", id = "e2", color = "#2ca02c" }],
+            [".", ".", ".", "fp-${var.environment}-charter", { stat = "Sum", label = "Charter Errors", id = "e3", color = "#ff7f0e" }],
+            [".", ".", ".", "fp-${var.environment}-retirement", { stat = "Sum", label = "Retirement Errors", id = "e4", color = "#d62728" }],
+            [".", ".", ".", "fp-${var.environment}-tagger", { stat = "Sum", label = "Tagger Errors", id = "e5", color = "#9467bd" }]
           ]
           view    = "timeSeries"
           stacked = false
@@ -233,11 +215,11 @@ resource "aws_cloudwatch_dashboard" "agent_performance" {
         height = 6
         properties = {
           metrics = [
-            ["AWS/Lambda", "Invocations", "FunctionName", "alex-planner", { stat = "Sum", label = "Planner", id = "i1", color = "#1f77b4" }],
-            [".", ".", ".", "alex-reporter", { stat = "Sum", label = "Reporter", id = "i2", color = "#2ca02c" }],
-            [".", ".", ".", "alex-charter", { stat = "Sum", label = "Charter", id = "i3", color = "#ff7f0e" }],
-            [".", ".", ".", "alex-retirement", { stat = "Sum", label = "Retirement", id = "i4", color = "#d62728" }],
-            [".", ".", ".", "alex-tagger", { stat = "Sum", label = "Tagger", id = "i5", color = "#9467bd" }]
+            ["AWS/Lambda", "Invocations", "FunctionName", "fp-${var.environment}-planner", { stat = "Sum", label = "Planner", id = "i1", color = "#1f77b4" }],
+            [".", ".", ".", "fp-${var.environment}-reporter", { stat = "Sum", label = "Reporter", id = "i2", color = "#2ca02c" }],
+            [".", ".", ".", "fp-${var.environment}-charter", { stat = "Sum", label = "Charter", id = "i3", color = "#ff7f0e" }],
+            [".", ".", ".", "fp-${var.environment}-retirement", { stat = "Sum", label = "Retirement", id = "i4", color = "#d62728" }],
+            [".", ".", ".", "fp-${var.environment}-tagger", { stat = "Sum", label = "Tagger", id = "i5", color = "#9467bd" }]
           ]
           view    = "timeSeries"
           stacked = false
@@ -260,11 +242,11 @@ resource "aws_cloudwatch_dashboard" "agent_performance" {
         height = 6
         properties = {
           metrics = [
-            ["AWS/Lambda", "ConcurrentExecutions", "FunctionName", "alex-planner", { stat = "Maximum", label = "Planner", id = "c1", color = "#1f77b4" }],
-            [".", ".", ".", "alex-reporter", { stat = "Maximum", label = "Reporter", id = "c2", color = "#2ca02c" }],
-            [".", ".", ".", "alex-charter", { stat = "Maximum", label = "Charter", id = "c3", color = "#ff7f0e" }],
-            [".", ".", ".", "alex-retirement", { stat = "Maximum", label = "Retirement", id = "c4", color = "#d62728" }],
-            [".", ".", ".", "alex-tagger", { stat = "Maximum", label = "Tagger", id = "c5", color = "#9467bd" }]
+            ["AWS/Lambda", "ConcurrentExecutions", "FunctionName", "fp-${var.environment}-planner", { stat = "Maximum", label = "Planner", id = "c1", color = "#1f77b4" }],
+            [".", ".", ".", "fp-${var.environment}-reporter", { stat = "Maximum", label = "Reporter", id = "c2", color = "#2ca02c" }],
+            [".", ".", ".", "fp-${var.environment}-charter", { stat = "Maximum", label = "Charter", id = "c3", color = "#ff7f0e" }],
+            [".", ".", ".", "fp-${var.environment}-retirement", { stat = "Maximum", label = "Retirement", id = "c4", color = "#d62728" }],
+            [".", ".", ".", "fp-${var.environment}tagger", { stat = "Maximum", label = "Tagger", id = "c5", color = "#9467bd" }]
           ]
           view    = "timeSeries"
           stacked = false
@@ -287,11 +269,11 @@ resource "aws_cloudwatch_dashboard" "agent_performance" {
         height = 6
         properties = {
           metrics = [
-            ["AWS/Lambda", "Throttles", "FunctionName", "alex-planner", { stat = "Sum", label = "Planner Throttles", id = "t1", color = "#1f77b4" }],
-            [".", ".", ".", "alex-reporter", { stat = "Sum", label = "Reporter Throttles", id = "t2", color = "#2ca02c" }],
-            [".", ".", ".", "alex-charter", { stat = "Sum", label = "Charter Throttles", id = "t3", color = "#ff7f0e" }],
-            [".", ".", ".", "alex-retirement", { stat = "Sum", label = "Retirement Throttles", id = "t4", color = "#d62728" }],
-            [".", ".", ".", "alex-tagger", { stat = "Sum", label = "Tagger Throttles", id = "t5", color = "#9467bd" }]
+            ["AWS/Lambda", "Throttles", "FunctionName", "fp-${var.environment}-planner", { stat = "Sum", label = "Planner Throttles", id = "t1", color = "#1f77b4" }],
+            [".", ".", ".", "fp-${var.environment}-reporter", { stat = "Sum", label = "Reporter Throttles", id = "t2", color = "#2ca02c" }],
+            [".", ".", ".", "fp-${var.environment}-charter", { stat = "Sum", label = "Charter Throttles", id = "t3", color = "#ff7f0e" }],
+            [".", ".", ".", "fp-${var.environment}-retirement", { stat = "Sum", label = "Retirement Throttles", id = "t4", color = "#d62728" }],
+            [".", ".", ".", "fp-${var.environment}-tagger", { stat = "Sum", label = "Tagger Throttles", id = "t5", color = "#9467bd" }]
           ]
           view    = "timeSeries"
           stacked = false

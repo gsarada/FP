@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Seed data for Alex Financial Planner
+Seed data for Financial Planner
 Loads 20+ popular ETF instruments with allocation data
 """
 

@@ -143,6 +143,18 @@ resource "aws_lambda_function" "researcher" {
   tags = local.common_tags
 }
 
+resource "aws_cloudwatch_log_group" "researcher_logs" {
+  name              = "/aws/lambda/${local.name_prefix}-researcher"
+  retention_in_days = 7
+  
+  tags = merge(
+    local.common_tags,
+    {
+      Agent   = each.key
+    }
+  )
+}
+
 # Public function URL for the researcher service
 resource "aws_lambda_function_url" "researcher" {
   count              = local.researcher_deployed ? 1 : 0

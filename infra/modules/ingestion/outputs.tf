@@ -3,6 +3,11 @@ output "vector_bucket_name" {
   value       = aws_s3vectors_vector_bucket.vectors.vector_bucket_name
 }
 
+output "lambda_function_name" {
+  description = "Name of the ingestion lambda function"
+  value       = aws_lambda_function.ingest..function_name
+}
+
 output "api_endpoint" {
   description = "API Gateway endpoint URL"
   value       = "${aws_api_gateway_stage.api.invoke_url}"

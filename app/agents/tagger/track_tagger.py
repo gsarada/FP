@@ -17,7 +17,7 @@ class TaggerLogTracker:
 
     def __init__(self):
         self.logs_client = boto3.client('logs', region_name='us-east-1')
-        self.log_group_name = '/aws/lambda/alex-tagger'
+        self.log_group_name = '/aws/lambda/fp-dev-tagger'
         self.running = True
         self.last_timestamp = None
 

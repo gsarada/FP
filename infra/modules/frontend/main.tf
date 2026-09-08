@@ -1,53 +1,39 @@
-# Part 7: Frontend & API Infrastructure
-
-terraform {
-  required_version = ">= 1.0"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-}
-
-# Data sources
-data "aws_caller_identity" "current" {}
-
-data "aws_region" "current" {}
-
 # Reference Part 5 Database resources
 data "terraform_remote_state" "database" {
-  backend = "local"
+  backend = "s3"
+
   config = {
-    path = "../5_database/terraform.tfstate"
+    bucket = var.backend_bucket_name
+    key    = "env:/${var.environment}/database/terraform.tfstate"
+    region = var.aws_region
   }
 }
 
 # Reference Part 6 Agents resources
 data "terraform_remote_state" "agents" {
-  backend = "local"
+  backend = "s3"
+
   config = {
-    path = "../6_agents/terraform.tfstate"
+    bucket = var.backend_bucket_name
+    key    = "env:/${var.environment}/agents/terraform.tfstate"
+    region = var.aws_region
   }
 }
 
 locals {
-  name_prefix = "alex"
+  name_prefix = "fp-${var.environment}"
 
   common_tags = {
-    Project     = "alex"
-    Part        = "7_frontend"
+    Project     = "fp"
+    Environment = var.environment
     ManagedBy   = "terraform"
+    Module      = "frontend"
   }
 }
 
 # S3 bucket for frontend static website
 resource "aws_s3_bucket" "frontend" {
-  bucket = "${local.name_prefix}-frontend-${data.aws_caller_identity.current.account_id}"
+  bucket = "${local.name_prefix}-frontend-bucket"
   tags   = local.common_tags
 }
 
@@ -178,11 +164,11 @@ resource "aws_iam_role_policy" "api_lambda_invoke" {
         Effect = "Allow"
         Action = "lambda:InvokeFunction"
         Resource = [
-          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:alex-planner",
-          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:alex-tagger",
-          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:alex-reporter",
-          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:alex-charter",
-          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:alex-retirement"
+          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:fp-${environment}-planner",
+          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:fp-${environment}-tagger",
+          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:fp-${environment}-reporter",
+          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:fp-${environment}-charter",
+          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:fp-${environment}-retirement"
         ]
       }
     ]
@@ -191,7 +177,7 @@ resource "aws_iam_role_policy" "api_lambda_invoke" {
 
 # Lambda function for API
 resource "aws_lambda_function" "api" {
-  filename         = "${path.module}/../../backend/api/api_lambda.zip"
+  filename         = "${path.module}/../../app/api/api_lambda.zip"
   function_name    = "${local.name_prefix}-api"
   role             = aws_iam_role.api_lambda_role.arn
   handler          = "lambda_handler.handler"
@@ -250,7 +236,7 @@ resource "aws_apigatewayv2_api" "main" {
 
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.main.id
-  name        = "$default"
+  name        = "default"
   auto_deploy = true
   tags        = local.common_tags
 
@@ -297,7 +283,7 @@ resource "aws_cloudfront_distribution" "main" {
   is_ipv6_enabled     = true
   default_root_object = "index.html"
   tags                = local.common_tags
-  comment             = "Alex Financial Advisor Frontend"
+  comment             = "Financial Advisor Frontend"
 
   # S3 origin for frontend
   origin {

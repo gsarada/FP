@@ -36,7 +36,7 @@ def test_reporter_lambda():
     # Invoke Lambda
     try:
         response = lambda_client.invoke(
-            FunctionName='alex-reporter',
+            FunctionName='fp-dev-reporter',
             InvocationType='RequestResponse',
             Payload=json.dumps({'job_id': job_id})
         )

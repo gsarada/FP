@@ -3,28 +3,28 @@
 
 # Your AWS region for Lambda functions
 # Should match your database region from Part 5
-aws_region = "us-east-1"
+aws_region = "ap-southeast-1"
 
 # Aurora cluster ARN from Part 5 (get from Terraform output)
-aurora_cluster_arn = "arn:aws:rds:us-east-1:123456789012:cluster:alex-aurora-cluster"
+aurora_cluster_arn = "arn:aws:rds:ap-southeast-1:123456789012:cluster:fp-dev-aurora-cluster"
 
 # Aurora secret ARN from Part 5 (get from Terraform output)
-aurora_secret_arn = "arn:aws:secretsmanager:us-east-1:123456789012:secret:alex-aurora-credentials-xxxxx"
+aurora_secret_arn = "arn:aws:secretsmanager:ap-southeast-1:123456789012:secret:fp-dev-aurora-credentials-xxxxx"
 
 # S3 Vectors bucket name from Part 3
-# Format: alex-vectors-{your-aws-account-id}
+# Format: fp-{env}-vectors-bucket
 vector_bucket = "fp-dev-vectors-bucket"
 
 # Bedrock model configuration
 # Using Amazon Nova Pro model for better reliability
-bedrock_model_id = "us.amazon.nova-pro-v1:0"
+bedrock_model_id = "ap.amazon.nova-pro-v1:0"
 
 # Bedrock region (us-west-2 has the most models available)
 # Note: This can be different from your Lambda region - cross-region calls work fine
-bedrock_region = "us-west-2"
+bedrock_region = "ap-southeast-1"
 
 # SageMaker endpoint name from Part 2
-# Default: alex-embedding-endpoint
+# Default: fp-{env}-embedding-endpoint
 sagemaker_endpoint = "fp-dev-embedding-endpoint"
 
 # Polygon.io API configuration for real-time market prices

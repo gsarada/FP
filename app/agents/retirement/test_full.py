@@ -36,7 +36,7 @@ def test_retirement_lambda():
     # Invoke Lambda
     try:
         response = lambda_client.invoke(
-            FunctionName='alex-retirement',
+            FunctionName='fp-dev-retirement',
             InvocationType='RequestResponse',
             Payload=json.dumps({'job_id': job_id})
         )

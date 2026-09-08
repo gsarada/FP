@@ -1,5 +1,5 @@
 """
-Alex Researcher Service - Investment Advice Agent
+FP Researcher Service - Investment Advice Agent
 """
 
 import os

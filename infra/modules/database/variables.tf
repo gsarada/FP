@@ -12,6 +12,11 @@ variable "environment" {
   }
 }
 
+variable "backend_bucket_name" {
+  description = "Name of the backend bucket where state is stored"
+  type        = string
+}
+
 variable "min_capacity" {
   description = "Minimum capacity for Aurora Serverless v2 (in ACUs)"
   type        = number

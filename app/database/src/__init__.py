@@ -1,5 +1,5 @@
 """
-Database package for Alex Financial Planner
+Database package for Financial Planner
 Provides database models, schemas, and Data API client
 """
 

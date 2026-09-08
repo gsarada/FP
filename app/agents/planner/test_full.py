@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run a full end-to-end test of the Alex agent orchestration.
+Run a full end-to-end test of the FP agent orchestration.
 This creates a test job and monitors it through completion.
 
 Usage:

@@ -1,4 +1,4 @@
--- Alex Financial Planner Database Schema
+-- Financial Planner Database Schema
 -- Version: 001
 -- Description: Initial schema for multi-user financial planning platform
 

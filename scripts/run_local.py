@@ -96,7 +96,7 @@ def check_env_files():
 
 def start_backend():
     """Start the FastAPI backend"""
-    backend_dir = Path(__file__).parent.parent / "backend" / "api"
+    backend_dir = Path(__file__).parent.parent / "app" / "api" / "src"
 
     print("\n🚀 Starting FastAPI backend...")
 
@@ -134,7 +134,7 @@ def start_backend():
 
 def start_frontend():
     """Start the NextJS frontend"""
-    frontend_dir = Path(__file__).parent.parent / "frontend"
+    frontend_dir = Path(__file__).parent.parent /"app"/ "frontend"
 
     print("\n🚀 Starting NextJS frontend...")
 
@@ -193,7 +193,7 @@ def start_frontend():
 def monitor_processes():
     """Monitor running processes and show their output"""
     print("\n" + "="*60)
-    print("🎯 Alex Financial Advisor - Local Development")
+    print("🎯 Financial Advisor - Local Development")
     print("="*60)
     print("\n📍 Services:")
     print("  Frontend: http://localhost:3000")
@@ -222,7 +222,7 @@ def monitor_processes():
 
 def main():
     """Main entry point"""
-    print("\n🔧 Alex Financial Advisor - Local Development Setup")
+    print("\n🔧 Financial Advisor - Local Development Setup")
     print("="*50)
 
     # Check prerequisites

@@ -4,6 +4,15 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "environment" {
+  description = "Environment name (dev, test, prod)"
+  type        = string
+  validation {
+    condition     = contains(["dev", "test", "prod"], var.environment)
+    error_message = "Environment must be one of: dev, test, prod."
+  }
+}
+
 variable "bedrock_region" {
   description = "AWS region for Bedrock (may differ from main region)"
   type        = string

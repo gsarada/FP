@@ -1,5 +1,5 @@
 """
-MCP server configurations for the Alex Researcher
+MCP server configurations for the FP Researcher
 """
 import glob
 import json
