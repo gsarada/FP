@@ -29,7 +29,7 @@ AWS_REGION="ap-southeast-1"
 ###############################################################################
 
 VALID_ACTIONS=("package" "infra-deploy" "app-deploy" "all")
-VALID_MODULES=("ingestion" "researcher" "agents" "api" "frontend" "all")
+VALID_MODULES=("sagemaker" "ingestion" "researcher" "database" "agents" "frontend" "dashboard" "all")
 
 if [[ ! " ${VALID_ACTIONS[*]} " =~ " ${ACTION} " ]]; then
     echo "ERROR: Invalid action '${ACTION}'"
@@ -79,7 +79,7 @@ if should_run_package; then
         for module in ingestion researcher agents api frontend; do
             "${PACKAGE_SCRIPT}" "${module}"
         done
-    elif [[ "${MODULE_NAME}" == "frontend" ]];
+    elif [[ "${MODULE_NAME}" == "frontend" ]]; then
         for module in api frontend; do
             "${PACKAGE_SCRIPT}" "${module}"
         done
@@ -98,6 +98,7 @@ prepare_terraform() {
     echo
     echo "========== TERRAFORM PREPARATION =========="
 
+    local module_name="$1"
     cd "${INFRA_DIR}"
 
     rm -rf temp
@@ -105,15 +106,9 @@ prepare_terraform() {
 
     cp provider.tf temp/
 
-    if [[ "${MODULE_NAME}" == "all" ]]; then
-        echo "ERROR: Terraform deployment requires a specific module."
-        echo "Use module: ingestion | researcher | agents | api | frontend"
-        exit 1
-    fi
+    cp "modules/${module_name}"/* temp/
 
-    cp "modules/${MODULE_NAME}"/*.tf temp/
-
-    local key="${MODULE_NAME}/terraform.tfstate"
+    local key="${module_name}/terraform.tfstate"
 
     echo "Terraform state key: ${key}"
 
@@ -163,11 +158,7 @@ ensure_researcher_ecr() {
 
 push_researcher_image() {
 
-    local ecr_url
-
-    ecr_url="$(
-        terraform -chdir=temp output --raw ecr_repository_url
-    )"
+    local ecr_url="$1"
 
     if [[ -z "${ecr_url}" ]]; then
         echo "ERROR: ECR repository URL not available."
@@ -179,17 +170,11 @@ push_researcher_image() {
 
     echo "Tagging image..."
 
-    docker tag \
-        "researcher:latest" \
-        "${ecr_url}:latest"
+    docker tag "researcher:latest" "${ecr_url}:latest"
 
     echo "Logging into ECR..."
 
-    aws ecr get-login-password \
-        --region "${AWS_REGION}" |
-        docker login \
-            --username AWS \
-            --password-stdin "${ecr_url}"
+    aws ecr get-login-password --region "${AWS_REGION}" | docker login --username AWS --password-stdin "${ecr_url}"
 
     echo "Pushing image..."
 
@@ -203,64 +188,62 @@ push_researcher_image() {
 ###############################################################################
 
 deploy_infrastructure() {
+    local module_name="$1"
 
-    local extra_args=()
+    echo "========== DEPLOYING INFRA - ${module_name} =========="
+    prepare_terraform "${module_name}"
 
-    if [[ "${MODULE_NAME}" == "researcher" ]]; then
+    local terraform_args=(
+        "apply"
+        "-var-file=${ENVIRONMENT}.tfvars"
+        "-var=backend_bucket_name=${TF_BACKEND_BUCKET_NAME}"
+        "-auto-approve"
+    )
 
+    if [[ "${module_name}" == "researcher" ]]; then
         local ecr_url
+
+        ensure_researcher_ecr
 
         ecr_url="$(
             terraform -chdir=temp output --raw ecr_repository_url
         )"
 
-        extra_args=(
+        push_researcher_image "${ecr_url}"
+
+        if should_run_package; then
+            push_researcher_image "${ecr_url}"
+        fi
+
+        terraform_args+=(
             "-var=researcher_image_uri=${ecr_url}:latest"
         )
-
     fi
 
     echo
     echo "========== INFRA DEPLOY =========="
 
-    terraform -chdir=temp apply \
-        -var-file="${ENVIRONMENT}.tfvars" \
-        -var="backend_bucket_name=${TF_BACKEND_BUCKET_NAME}" \
-        "${extra_args[@]}" \
-        -auto-approve
-
-    echo "Infrastructure deployed successfully."
+    terraform -chdir=temp "${terraform_args[@]}"
 }
 
 ###############################################################################
 # Main deployment flow
 ###############################################################################
 
-prepare_terraform
+if should_run_infra; then
+    if [[ "${MODULE_NAME}" == "all" ]]; then
+        
+        for module in sagemaker ingestion researcher database agents frontend dashboard; do
+            
+            deploy_infrastructure "${module}"
+        
+        done
+    
+    else
 
-###############################################################################
-# Researcher special case
-###############################################################################
+        deploy_infrastructure "${MODULE_NAME}"
 
-if [[ "${MODULE_NAME}" == "researcher" ]]; then
-
-    # ECR must exist before image can be pushed.
-    ensure_researcher_ecr
-
-    if should_run_package; then
-        push_researcher_image
     fi
-
-    if should_run_infra; then
-        deploy_infrastructure
-    fi
-
-else
-
-    if should_run_infra; then
-        deploy_infrastructure
-    fi
-
 fi
 
 ###############################################################################
@@ -272,9 +255,7 @@ if should_run_app; then
     echo
     echo "========== APP DEPLOY =========="
 
-    "${APP_DEPLOY_SCRIPT}" \
-        "${ENVIRONMENT}" \
-        "${MODULE_NAME}"
+    "${APP_DEPLOY_SCRIPT}" "${ENVIRONMENT}" "${MODULE_NAME}"
 
 fi
 

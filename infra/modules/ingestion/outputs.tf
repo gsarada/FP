@@ -5,7 +5,7 @@ output "vector_bucket_name" {
 
 output "lambda_function_name" {
   description = "Name of the ingestion lambda function"
-  value       = aws_lambda_function.ingest..function_name
+  value       = aws_lambda_function.ingest.function_name
 }
 
 output "api_endpoint" {

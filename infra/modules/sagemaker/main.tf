@@ -90,4 +90,5 @@ resource "aws_sagemaker_endpoint" "embedding_endpoint" {
 resource "aws_cloudwatch_log_group" "sagemaker_endpoint_logs" {
   name              = "/aws/sagemaker/Endpoints/${aws_sagemaker_endpoint.embedding_endpoint.name}"
   retention_in_days = 7
+  skip_destroy = false
 }

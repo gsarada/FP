@@ -13,6 +13,11 @@ variable "environment" {
   }
 }
 
+variable "backend_bucket_name" {
+  description = "Name of the backend bucket where state is stored"
+  type        = string
+}
+
 # Clerk validation happens in Lambda, not at API Gateway level
 variable "clerk_jwks_url" {
   description = "Clerk JWKS URL for JWT validation in Lambda"

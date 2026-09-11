@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 INFRA_DIR=${PROJECT_ROOT}/infra
 TF_BACKEND_BUCKET_NAME="fp-app-terraform-state"
-MODULES=("agents" "database" "ingestion" "researcher" "sagemaker")
+MODULES=("frontend" "agents" "database" "ingestion" "researcher" "sagemaker")
 
 # 2. Terraform workspace & apply
 cd $INFRA_DIR

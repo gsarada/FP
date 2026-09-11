@@ -13,6 +13,11 @@ variable "environment" {
   }
 }
 
+variable "backend_bucket_name" {
+  description = "Name of the backend bucket where state is stored"
+  type        = string
+}
+
 variable "bedrock_region" {
   description = "AWS region for Bedrock (may differ from main region)"
   type        = string

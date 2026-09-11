@@ -21,13 +21,36 @@ deploy_frontend_app() {
 
     local bucket_name="$1"
     local cloudfront_id="$2"
+    local cloudfront_url="$3"
 
-    local out_dir="${PROJECT_ROOT}/app/frontend/out"
+    local frontend_dir="${PROJECT_ROOT}/app/frontend"
+    local out_dir="${frontend_dir}/out"
+    local env_local="${frontend_dir}/.env.local"
+    local env_prod="${out_dir}/.env.production.local"
+
+    # 1. Ensure the destination directory exists before creating the file
+    mkdir -p "${out_dir}"
+
+    # Create production env from .env.local
+    sed "s|^NEXT_PUBLIC_API_URL=.*|NEXT_PUBLIC_API_URL=${cloudfront_url}|" \
+        "${env_local}" > "${env_prod}"
+    
+    # Add variable if it doesn't already exist
+    grep -q "^NEXT_PUBLIC_API_URL=" "${env_prod}" || \
+        echo "NEXT_PUBLIC_API_URL=${cloudfront_url}" >> "${env_prod}"
+
+    cat "${env_prod}"
+
+    echo "Building NextJS application..."
+
+    NODE_ENV=production npm run build --prefix "${frontend_dir}"
 
     [[ -d "${out_dir}" ]] || {
-        echo "ERROR: Frontend build not found: ${out_dir}"
+        echo "ERROR: Frontend build output not found: ${out_dir}"
         exit 1
     }
+
+    echo "Frontend build completed."
 
     [[ -n "${bucket_name}" ]] || {
         echo "ERROR: S3 bucket name is required."
@@ -39,7 +62,6 @@ deploy_frontend_app() {
         exit 1
     }
 
-    echo
     echo "=========================================="
     echo "Deploying frontend"
     echo "=========================================="
@@ -66,7 +88,7 @@ deploy_frontend_app() {
 
     aws cloudfront create-invalidation \
         --distribution-id "${cloudfront_id}" \
-        --paths "/*"
+        --paths "/*" > /dev/null
 
     echo "Frontend deployed successfully."
 
@@ -93,7 +115,7 @@ deploy_lambda_app() {
 
     aws lambda update-function-code \
         --function-name "${function_name}" \
-        --zip-file "fileb://${zip_file}"
+        --zip-file "fileb://${zip_file}" > /dev/null
 
     echo "Lambda deployed successfully."
 
@@ -137,13 +159,15 @@ case "${MODULE}" in
             terraform -chdir="${TF_DIR}" output --raw cloudfront_id
         )"
 
+        cloudfront_url="$(
+            terraform -chdir="${TF_DIR}" output --raw cloudfront_url
+        )"
+
         function_name="$(
             terraform -chdir="${TF_DIR}" output --raw lambda_function_name
         )"
 
-        deploy_frontend_app \
-            "${bucket_name}" \
-            "${cloudfront_id}"
+        deploy_frontend_app "${bucket_name}" "${cloudfront_id}" "${cloudfront_url}"
 
         deploy_lambda_app "api" "${function_name}"
         ;;
@@ -176,7 +200,7 @@ case "${MODULE}" in
     *)
 
         echo "ERROR: Unsupported application module '${MODULE}'."
-        exit 1
+        exit 0
         ;;
 
 esac

@@ -51,7 +51,7 @@ case "${MODULE}" in
 
     *)
         echo "ERROR: Module '${MODULE}' is not configured."
-        exit 1
+        exit 0
         ;;
 
 esac
@@ -149,15 +149,12 @@ package_zip() {
 
         echo "Installing dependencies..."
 
-        docker run --rm \
-            --platform linux/amd64 \
-            -v "${package_dir}:/var/task" \
-            -v "${build_dir}/requirements.txt:/tmp/requirements.txt" \
-            public.ecr.aws/lambda/python:3.12 \
-            /bin/sh -c \
-            "pip install --no-cache-dir \
-             -r /tmp/requirements.txt \
-             -t /var/task"
+        uv pip install \
+            --no-cache \
+            --python-platform x86_64-manylinux_2_28 \
+            --python-version 3.12 \
+            --target "${package_dir}" \
+            -r "${build_dir}/requirements.txt"
 
         echo "Copying application..."
 
@@ -166,6 +163,7 @@ package_zip() {
             --exclude="__pycache__" \
             --exclude="*.pyc" \
             --exclude=".env*" \
+            --exclude=".venv" \
             "${app_dir}/src/" \
             "${package_dir}/"
 
@@ -279,18 +277,6 @@ build_node() {
         fi
 
     fi
-
-    echo "Building NextJS application..."
-
-    NODE_ENV=production \
-        npm run build --prefix "${app_dir}"
-
-    [[ -d "${out_dir}" ]] || {
-        echo "ERROR: Frontend build output not found: ${out_dir}"
-        exit 1
-    }
-
-    echo "Frontend build completed."
 
 }
 

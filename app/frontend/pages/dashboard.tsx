@@ -126,7 +126,7 @@ export default function Dashboard() {
         });
 
         if (!userResponse.ok) {
-          throw new Error(`Failed to sync user: ${userResponse.status}`);
+          throw new Error(`Failed to sync user: ${userResponse}, ${userResponse.status}`);
         }
 
         const response = await userResponse.json();
@@ -441,7 +441,7 @@ export default function Dashboard() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                    <Tooltip formatter={(value: any) => `$${value.toLocaleString()}`} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

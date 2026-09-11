@@ -13,6 +13,7 @@
 terraform.tfstate.d/
 *.tfvars
 !terraform.tfvars.example
+**/temp
 
 # Lambda packages
 lambda-deployment.zip

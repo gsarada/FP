@@ -74,7 +74,7 @@ def check_env_files():
     project_root = Path(__file__).parent.parent
 
     root_env = project_root / ".env"
-    frontend_env = project_root / "frontend" / ".env.local"
+    frontend_env = project_root / "app" / "frontend" / ".env.local"
 
     missing = []
 

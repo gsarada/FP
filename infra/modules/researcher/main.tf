@@ -147,12 +147,7 @@ resource "aws_cloudwatch_log_group" "researcher_logs" {
   name              = "/aws/lambda/${local.name_prefix}-researcher"
   retention_in_days = 7
   
-  tags = merge(
-    local.common_tags,
-    {
-      Agent   = each.key
-    }
-  )
+  tags = local.common_tags
 }
 
 # Public function URL for the researcher service

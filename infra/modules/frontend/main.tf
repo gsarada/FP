@@ -164,11 +164,11 @@ resource "aws_iam_role_policy" "api_lambda_invoke" {
         Effect = "Allow"
         Action = "lambda:InvokeFunction"
         Resource = [
-          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:fp-${environment}-planner",
-          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:fp-${environment}-tagger",
-          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:fp-${environment}-reporter",
-          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:fp-${environment}-charter",
-          "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:fp-${environment}-retirement"
+          "arn:aws:lambda:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:function:fp-${var.environment}-planner",
+          "arn:aws:lambda:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:function:fp-${var.environment}-tagger",
+          "arn:aws:lambda:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:function:fp-${var.environment}-reporter",
+          "arn:aws:lambda:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:function:fp-${var.environment}-charter",
+          "arn:aws:lambda:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:function:fp-${var.environment}-retirement"
         ]
       }
     ]
@@ -181,7 +181,7 @@ resource "aws_lambda_function" "api" {
   function_name    = "${local.name_prefix}-api"
   role             = aws_iam_role.api_lambda_role.arn
   handler          = "lambda_handler.handler"
-  source_code_hash = filebase64sha256("${path.module}/../../backend/api/api_lambda.zip")
+  source_code_hash = filebase64sha256("${path.module}/../../app/api/api_lambda.zip")
   runtime          = "python3.12"
   architectures    = ["x86_64"]
   timeout          = 30
@@ -201,7 +201,7 @@ resource "aws_lambda_function" "api" {
 
       # Clerk configuration for JWT validation
       CLERK_JWKS_URL = var.clerk_jwks_url
-      CLERK_ISSUER   = var.clerk_issuer
+      # CLERK_ISSUER   = var.clerk_issuer
 
       # CORS configuration
       CORS_ORIGINS = "http://localhost:3000,https://${aws_cloudfront_distribution.main.domain_name}"
@@ -215,6 +215,14 @@ resource "aws_lambda_function" "api" {
     aws_iam_role_policy.api_lambda_invoke,
     aws_cloudfront_distribution.main
   ]
+}
+
+# CloudWatch Log Groups
+resource "aws_cloudwatch_log_group" "api_log" {
+  name              = "/aws/lambda/${local.name_prefix}-api"
+  retention_in_days = 7
+  
+  tags = local.common_tags
 }
 
 # API Gateway HTTP API
@@ -232,17 +240,64 @@ resource "aws_apigatewayv2_api" "main" {
   }
 }
 
+### Additional - can remove if costs are high
+resource "aws_cloudwatch_log_group" "gateway_api_logs" {
+  name              = "/aws/api-gw/${aws_apigatewayv2_api.main.name}"
+  retention_in_days = 7 # Always set a retention period to avoid infinite storage costs
+}
+
+
+# 2. Attach a resource policy directly to the Log Group allowing API Gateway inside
+resource "aws_cloudwatch_log_resource_policy" "apigateway_to_cloudwatch" {
+  policy_name = "AllowApiGatewayToWriteLogs"
+
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowAPIGatewayToLog"
+        Effect = "Allow"
+        Principal = {
+          Service = "apigateway.amazonaws.com"
+        }
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "${aws_cloudwatch_log_group.gateway_api_logs.arn}:*"
+      }
+    ]
+  })
+}
+
 # No JWT authorizer needed - authentication is handled in Lambda like in the saas reference
 
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.main.id
-  name        = "default"
+  name        = "$default"
   auto_deploy = true
-  tags        = local.common_tags
-
+  
   default_route_settings {
     throttling_burst_limit = 100
     throttling_rate_limit  = 100
+    logging_level = "INFO"
+  }
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.gateway_api_logs.arn
+    
+    # Recommended production JSON log format
+    format = jsonencode({
+      requestId      = "$context.requestId"
+      ip             = "$context.identity.sourceIp"
+      requestTime    = "$context.requestTime"
+      httpMethod     = "$context.httpMethod"
+      routeKey       = "$context.routeKey"
+      status         = "$context.status"
+      protocol       = "$context.protocol"
+      responseLength = "$context.responseLength"
+      integrationErr = "$context.integrationErrorMessage"
+    })
   }
 }
 
@@ -250,6 +305,8 @@ resource "aws_apigatewayv2_integration" "lambda" {
   api_id           = aws_apigatewayv2_api.main.id
   integration_type = "AWS_PROXY"
   integration_uri  = aws_lambda_function.api.invoke_arn
+  integration_method = "POST" # Must always be POST for Lambda integrations
+  payload_format_version = "2.0"
 }
 
 # API Gateway Routes - all routes under /api/*
@@ -275,6 +332,15 @@ resource "aws_lambda_permission" "api_gw" {
   function_name = aws_lambda_function.api.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
+}
+
+# CloudFront distribution access logs log group
+resource "aws_cloudwatch_log_group" "cloud_front_logs" {
+  name              = "/aws/lambda/${local.name_prefix}-cf-logs"
+  retention_in_days = 7
+  region = "us-east-1"
+  
+  tags = local.common_tags
 }
 
 # CloudFront distribution

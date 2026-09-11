@@ -70,7 +70,7 @@ async def run_reporter_agent(
         response = result.final_output
 
         if observability:
-            with observability.start_as_current_span(name="judge") as span:
+            with observability.start_as_current_observation(name="judge") as span:
                 evaluation = await evaluate(REPORTER_INSTRUCTIONS, task, response)
                 score = evaluation.score / 100
                 comment = evaluation.feedback
