@@ -14,8 +14,16 @@ on:
           - dev
           - test
           - prod
+      action:
+        description: 'Terraform action to perform'
+        required: true
+        type: choice
+        options:
+          - apply
+          - destroy
+          - output
       module:
-        description: 'Infra module to deploy'
+        description: 'Infra module'
         required: true
         default: 'all'
         type: choice
@@ -23,15 +31,19 @@ on:
           - sagemaker
           - ingestion
           - researcher
-          - agents
           - database
+          - agents
           - frontend
           - dashboard
-      build_package:
-        description: 'Build and package module lambdas?'
+      module-action:
+        description: 'Action to perform'
         required: true
-        default: true
-        type: boolean
+        default: 'all'
+        type: choice
+        options:
+          - package
+          - infra-deploy
+          - app-deploy
 
 permissions:
   id-token: write
@@ -74,57 +86,30 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
+          cache-dependency-path: app/frontend/package-lock.json
+      
       - name: Run Deployment Script
         run: |
-          # Set environment variables for the script
-          export AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
-          export DEFAULT_AWS_REGION=${{ secrets.DEFAULT_AWS_REGION }}
-          
-          # Make script executable and run it
-          chmod +x scripts/deploy.sh
-          ./scripts/deploy.sh ${{ github.event.inputs.environment || 'dev' }} ${{ github.event.inputs.module || 'all' }} ${{ github.event.inputs.build_package }}
+          if [[ ${{inputs.action}} == "apply" ]]; then
+            # Make script executable and run it
+            chmod +x ./scripts/deploy.sh
+            ./scripts/deploy.sh ${{ inputs.environment || 'dev' }} ${{ inputs.module || 'all' }} ${{ inputs.module-action }}
+          fi
+          if [[ ${{inputs.action}} == "destroy" ]]; then
+            # Make script executable and run it
+            chmod +x ./scripts/destroy.sh
+            ./scripts/destroy.sh ${{ inputs.environment || 'dev' }} ${{ inputs.module || 'all' }}
+          fi
+          if [[ ${{inputs.action}} == "output" ]]; then
+            # Make script executable and run it
+            chmod +x ./scripts/get_outputs.sh
+            ./scripts/deploy.sh ${{ inputs.environment || 'dev' }} ${{ inputs.module || 'all' }} ${{ inputs.module-action }}
+          fi  
         env:
           AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          DEFAULT_AWS_REGION: ${{ secrets.DEFAULT_AWS_REGION }}
 
-      # - name: Get Deployment URLs
-      #   id: deploy_outputs
-      #   working-directory: ./terraform
-      #   run: |
-      #     terraform workspace select ${{ github.event.inputs.environment || 'dev' }}
-      #     echo "cloudfront_url=$(terraform output -raw cloudfront_url)" >> $GITHUB_OUTPUT
-      #     echo "api_url=$(terraform output -raw api_gateway_url)" >> $GITHUB_OUTPUT
-      #     echo "frontend_bucket=$(terraform output -raw s3_frontend_bucket)" >> $GITHUB_OUTPUT
-
-      # - name: Invalidate CloudFront
-      #   run: |
-      #     DISTRIBUTION_ID=$(aws cloudfront list-distributions \
-      #       --query "DistributionList.Items[?Origins.Items[?DomainName=='${{ steps.deploy_outputs.outputs.frontend_bucket }}.s3-website-${{ secrets.DEFAULT_AWS_REGION }}.amazonaws.com']].Id | [0]" \
-      #       --output text)
-          
-      #     if [ "$DISTRIBUTION_ID" != "None" ] && [ -n "$DISTRIBUTION_ID" ]; then
-      #       aws cloudfront create-invalidation \
-      #         --distribution-id $DISTRIBUTION_ID \
-      #         --paths "/*"
-      #     fi
-
-      # - name: Deployment Summary
-      #   run: |
-      #     echo "✅ Deployment Complete!"
-      #     echo "🌐 CloudFront URL: ${{ steps.deploy_outputs.outputs.cloudfront_url }}"
-      #     echo "📡 API Gateway: ${{ steps.deploy_outputs.outputs.api_url }}"
-      #     echo "🪣 Frontend Bucket: ${{ steps.deploy_outputs.outputs.frontend_bucket }}"
+      
   
-  deploy-lambda:
-    if: ${{ inputs.app-module != '' }}
-    steps:
-      - name: Deploy ingest 
-        uses: ./.github/workflows/deploy-lambda.yml
-        secrets: inherit
-        with:
-          action: deploy
-          module: planneringest
-          dependencies: ''
-          lambda-function: fp-ingest
-          s3_bucket: ""
+  

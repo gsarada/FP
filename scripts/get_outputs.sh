@@ -2,6 +2,7 @@
 set -e
 
 ENVIRONMENT=${1:-dev}          # dev | test | prod
+MODULE=${2:-all}
 
 echo "🚀 Getting Financial Planner ${ENVIRONMENT} infra outputs ..."
 
@@ -9,14 +10,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 INFRA_DIR=${PROJECT_ROOT}/infra
 TF_BACKEND_BUCKET_NAME="fp-app-terraform-state"
-MODULES=("frontend" "agents" "database" "ingestion" "researcher" "sagemaker")
+MODULES=()
+if [[ "${MODULE}" == "all" ]]; then
+  MODULES=("dashboard" "frontend" "agents" "database" "ingestion" "researcher" "sagemaker")
+else
+  MODULES=(${MODULE})
+fi
 
 # 2. Terraform workspace & apply
 cd $INFRA_DIR
 
 for MODULE_NAME in ${MODULES[@]}; do
  
-  rm -r temp
+  rm -rf temp
   mkdir temp
   cp provider.tf temp/
   key=$MODULE_NAME/terraform.tfstate
